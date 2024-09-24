@@ -1,5 +1,3 @@
-use std::env;
-
 use serenity::async_trait;
 use serenity::model::channel::Message;
 use serenity::prelude::*;
