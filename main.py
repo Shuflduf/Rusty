@@ -20,8 +20,8 @@ async def on_message(message):
     if message.content.startswith('$hello'):
         await message.channel.send('Hello!')
 
-    elif message.content.startswith("$prompt "):
-        await message.channel.send(ai.generate(message.content.split("$prompt")[1]))
+    elif message.content.startswith("$"):
+        await message.channel.send(ai.generate(message.content[1:]))
 
 client.run('MTI3MTMwMzQyMjA0OTY1Mjc3Ng.GlYDdI.7FrHPFaveCUWW01UaABK8Jx1pJrXu91C73JkBQ')
 
