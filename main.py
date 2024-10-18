@@ -26,20 +26,23 @@ async def on_message(message):
     if message.channel.id != last_channel_id:
         last_channel_id = message.channel.id 
         log_text(
-            f"[Now in {message.guild.name}: #{message.channel.name}]".center(40, '=')
+            f"[Now in {message.guild.name}: #{message.channel.name}]".center(49, '=')
         )
+        if not message.channel.id in conversation_mode.keys():
+            conversation_mode.update({message.channel.id: False})
 
-    if message.author.id == constants.shufl_id && message.content.startswith("$log"):
-        await message.channel.send(log.return_log())
+    if message.content.startswith("$log"):
+        print(message.author.id)
+        if str(message.author.id) == constants.shufl_id:
+            await message.channel.send(log.return_log())
+        else:
+            await message.channel.send(f"You are not Shuflduf!")
 
     elif message.content.startswith('$hello'):
         await message.channel.send('Hello!')
         log_text(f"Hello, {message.author.name}!")
 
     elif message.content.startswith("$convo"):
-        if not message.channel.id in conversation_mode.keys():
-            conversation_mode.update({message.channel.id: False})
-
         conversation_mode[message.channel.id] = not conversation_mode[message.channel.id]
         local_conversation_enabled = conversation_mode[message.channel.id]
         await message.channel.send(f"Conversation mode is now set to: {local_conversation_enabled}")
