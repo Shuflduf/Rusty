@@ -7,7 +7,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 
-conversation_mode = False
+conversation_mode = {}
 last_channel_id = 0
 
 log.init()
@@ -33,9 +33,13 @@ async def on_message(message):
         log_text(f"Hello, {message.author.name}!")
 
     elif message.content.startswith("$convo"):
-        conversation_mode = not conversation_mode
-        await message.channel.send(f"Conversation mode is now set to: {conversation_mode}")
-        log_text(f"Conversation mode is now set to: {conversation_mode}")
+        if not message.channel.id in conversation_mode.keys():
+            conversation_mode.update({message.channel.id: False})
+
+        conversation_mode[message.channel.id] = not conversation_mode[message.channel.id]
+        local_conversation_enabled = conversation_mode[message.channel.id]
+        await message.channel.send(f"Conversation mode is now set to: {local_conversation_enabled}")
+        log_text(f"Conversation mode is now set to: {local_conversation_enabled}")
  
     elif conversation_mode:
         log_text(f"{message.author.name}: {message.content}")
