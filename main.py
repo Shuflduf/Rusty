@@ -45,7 +45,7 @@ async def on_message(message):
         await message.channel.send(f"Conversation mode is now set to: {local_conversation_enabled}")
         log_text(f"Conversation mode is now set to: {local_conversation_enabled}")
  
-    elif conversation_mode:
+    elif conversation_mode[message.channel.id]:
         log_text(f"{message.author.name}: {message.content}")
         response = ai.continue_chat(message.content, message.channel.id)
         await message.channel.send(response)
