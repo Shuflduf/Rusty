@@ -30,15 +30,15 @@ async def on_message(message):
         log_text(f"Conversation mode is now set to: {conversation_mode}")
  
     elif conversation_mode:
+        log_text(f"{message.author.name}: {message.content}")
         response = ai.generate(message.content)
         await message.channel.send(response)
-        log_text(f"{message.author.name}: {message.content}")
         log_text(f"{client.user.name}: {response}")
     
     elif message.content.startswith("$"):
+        log_text(f"$ {message.author.name}: {message.content[1:]}")
         response = ai.generate(message.content[1:])
         await message.channel.send(response)
-        log_text(f"$ {message.author.name}: {message.content[1:]}")
         log_text(f"$ {client.user.name}: {response}")
 
 client.run('MTI3MTMwMzQyMjA0OTY1Mjc3Ng.GlYDdI.7FrHPFaveCUWW01UaABK8Jx1pJrXu91C73JkBQ')
