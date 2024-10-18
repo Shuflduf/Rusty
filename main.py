@@ -39,7 +39,7 @@ async def on_message(message):
     if message.content.startswith("$log"):
         print(message.author.id)
         if str(message.author.id) == constants.shufl_id:
-            send_long_message(log.return_log(), channel)
+            await send_long_message(log.return_log(), message.channel)
         else:
             await message.channel.send(f"You are not Shuflduf!")
 
