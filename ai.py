@@ -8,10 +8,10 @@ chats = {}
 
 def generate(prompt):
     response = model.generate_content(prompt)
-    return response.text[:2000]
+    return response.text
 
 def continue_chat(prompt, channel_id):
     if not channel_id in chats.keys():
         chats.update({channel_id: model.start_chat()})
 
-    return chats[channel_id].send_message(prompt).text[:2000]
+    return chats[channel_id].send_message(prompt).text

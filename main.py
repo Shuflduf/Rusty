@@ -1,4 +1,5 @@
 import discord
+import math
 import ai
 import log
 import constants
@@ -12,6 +13,10 @@ conversation_mode = {}
 last_channel_id = 0
 
 log.init()
+
+async def send_long_message(text, channel):
+    for i in range(int(math.ceil(len(text) / 2000))):
+        await channel.send(text[i * 2000: (i + 1) * 2000])
 
 async def on_ready():
     log_text(f'We have logged in as {client.user}')
@@ -34,13 +39,17 @@ async def on_message(message):
     if message.content.startswith("$log"):
         print(message.author.id)
         if str(message.author.id) == constants.shufl_id:
-            await message.channel.send(log.return_log())
+            send_long_message(log.return_log(), channel)
         else:
             await message.channel.send(f"You are not Shuflduf!")
 
     elif message.content.startswith('$hello'):
         await message.channel.send('Hello!')
         log_text(f"Hello, {message.author.name}!")
+
+    elif message.content.startswith('$longhello'):
+        await send_long_message('Hello! ' * 300, message.channel)
+        log_text(f"BIG Hello, {message.author.name}!")
 
     elif message.content.startswith("$convo"):
         conversation_mode[message.channel.id] = not conversation_mode[message.channel.id]
@@ -51,13 +60,13 @@ async def on_message(message):
     elif conversation_mode[message.channel.id]:
         log_text(f"{message.author.name}: {message.content}")
         response = ai.continue_chat(message.content, message.channel.id)
-        await message.channel.send(response)
+        await send_long_message(response, message.channel)
         log_text(f"{client.user.name}: {response}")
     
     elif message.content.startswith("$"):
         log_text(f"$ {message.author.name}: {message.content[1:]}")
         response = ai.generate(message.content[1:])
-        await message.channel.send(response)
+        await send_long_message(response, message.channel)
         log_text(f"$ {client.user.name}: {response}")
 
 client.run(constants.discord_token)
