@@ -1,6 +1,7 @@
 import discord
 import ai
 import log
+import constants
 from log import log_text
 
 intents = discord.Intents.default()
@@ -28,7 +29,10 @@ async def on_message(message):
             f"[Now in {message.guild.name}: #{message.channel.name}]".center(40, '=')
         )
 
-    if message.content.startswith('$hello'):
+    if message.author.id == constants.shufl_id && message.content.startswith("$log"):
+        await message.channel.send(log.return_log())
+
+    elif message.content.startswith('$hello'):
         await message.channel.send('Hello!')
         log_text(f"Hello, {message.author.name}!")
 
@@ -53,5 +57,5 @@ async def on_message(message):
         await message.channel.send(response)
         log_text(f"$ {client.user.name}: {response}")
 
-client.run('MTI3MTMwMzQyMjA0OTY1Mjc3Ng.GlYDdI.7FrHPFaveCUWW01UaABK8Jx1pJrXu91C73JkBQ')
+client.run(constants.discord_token)
 

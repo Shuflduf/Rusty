@@ -12,7 +12,7 @@ def init():
             log_num = num
     log_file_path = f"Logs/log{log_num + 1}.txt"
     f = open(log_file_path, 'a')
-    f.write(f"[{str(datetime.date.today())}]")
+    f.write(f"[{str(datetime.date.today())}]".center(60, '='))
     f.write("\n")
     f.close()
     
@@ -21,3 +21,7 @@ def log_text(text):
     f.write(f"[{str(datetime.datetime.now().time())}] {text}")
     f.write("\n")
     f.close()
+
+def return_log():
+    f = open(log_file_path, 'r')
+    return f.read()

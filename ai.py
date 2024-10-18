@@ -1,6 +1,7 @@
+import constants
 import google.generativeai as genai
 
-genai.configure(api_key="AIzaSyCW8kjw3V-YdNu1AX_qewTgFOHiOoQOywk")
+genai.configure(api_key=constants.gemini_api_key)
 model = genai.GenerativeModel("gemini-1.5-flash")
 
 chats = {}
