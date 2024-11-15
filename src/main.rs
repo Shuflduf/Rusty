@@ -3,9 +3,8 @@ use std::env;
 use std::sync::{Arc, OnceLock};
 
 use gemini_rs::Conversation;
-use serenity::all::{ChannelId, Http, Ready};
+use serenity::all::{ChannelId, Http, Message, Ready};
 use serenity::async_trait;
-use serenity::model::channel::Message;
 use serenity::prelude::*;
 use lazy_static::lazy_static;
 
@@ -30,26 +29,69 @@ impl EventHandler for Handler {
             if let Err(why) = msg.channel_id.say(&ctx.http, "Hello!").await {
                 println!("Error sending message: {why:?}");
             }
-        } else if {
-            let histories = SERVER_HISTORIES.lock().await;
-            histories.contains_key(&msg.channel_id)
-        } {
-            println!("a");    
-        } else if msg.content.starts_with("$") {
-            let key = env::var("GEMINI_API_KEY").unwrap();
-            let http = &Arc::new(Http::new(&env::var("RUSTY_TOKEN").unwrap()));
-            let typing = msg.channel_id.start_typing(http);
-            let mut response = gemini_rs::Conversation::new(
-                key,
-                "gemini-1.5-flash".to_string()
-            ).prompt(&msg.content[1..]).await;
-            response.truncate(2000);
+        } else if msg.content == "$convo" {
+                if SERVER_HISTORIES.lock().await
+                .contains_key(&msg.channel_id)
+            {
+                // If the channel is in convo mode
+                let mut histories = SERVER_HISTORIES.lock().await;
+                histories.remove(&msg.channel_id)
+                
 
-            typing.stop();
-            if let Err(why) = msg.channel_id.say(&ctx.http, response).await {
-                println!("Error sending message: {why:?}");
+            } else {
+                // Add the channel to the list 
+                let mut histories = SERVER_HISTORIES.lock().await;
+                histories.insert(msg.channel_id, Conversation::new(
+                    env::var("GEMINI_API_KEY").unwrap(),
+                    "gemini-1.5-flash".to_string()
+                ))
             }
-        }
+
+        } else if 
+            SERVER_HISTORIES.lock().await
+            .contains_key(&msg.channel_id)
+        {
+            let mut histories = SERVER_HISTORIES.lock().await;
+            if let Some(convo) = histories.get_mut(&msg.channel_id) {
+                todo!()
+            }
+            //let mut convo: &mut Conversation = histories.get(&msg.channel_id).unwrap();
+            //println!("{0:?}", *convo.prompt("a").await);
+        } else if msg.content.starts_with("$") {
+            send_message(&ctx, &msg, &msg.content[1..], None).await
+            //let key = env::var("GEMINI_API_KEY").unwrap();
+            //let http = &Arc::new(Http::new(&env::var("RUSTY_TOKEN").unwrap()));
+            //let typing = msg.channel_id.start_typing(http);
+            //let mut response = gemini_rs::Conversation::new(
+            //    key,
+            //    "gemini-1.5-flash".to_string()
+            //).prompt(&msg.content[1..]).await;
+            //response.truncate(2000);
+            //
+            //typing.stop();
+            //if let Err(why) = msg.channel_id.say(&ctx.http, response).await {
+            //    println!("Error sending message: {why:?}");
+            //}
+        } 
+    }
+}
+
+async fn send_message(ctx: &Context, msg: &Message, text: &str, convo: Option<Conversation>) {
+    let mut conversation = match convo {
+        None => Conversation::new(
+                env::var("GEMINI_API_KEY").unwrap(),
+                "gemini-1.5-flash".to_string()
+            ),
+        Some(cool_its_done) => cool_its_done,
+    };
+    let http = &Arc::new(Http::new(&env::var("RUSTY_TOKEN").unwrap()));
+    let typing = msg.channel_id.start_typing(http);
+    let mut response = conversation.prompt(text).await;
+    response.truncate(2000);
+
+    typing.stop();
+    if let Err(why) = msg.channel_id.say(&ctx.http, response).await {
+        println!("Error sending message: {why:?}");
     }
 }
 
