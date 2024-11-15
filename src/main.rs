@@ -2,13 +2,17 @@ use std::collections::HashMap;
 use std::env;
 use std::sync::{Arc, OnceLock};
 
-use serenity::all::{Http, Ready};
+use gemini_rs::Conversation;
+use serenity::all::{ChannelId, Http, Ready};
 use serenity::async_trait;
 use serenity::model::channel::Message;
 use serenity::prelude::*;
+use lazy_static::lazy_static;
 
 static BOT_ID: OnceLock<u64> = OnceLock::new();
-//static SERVER_HISTORIES: HashMap<ChannelFlags>
+lazy_static! {
+    static ref SERVER_HISTORIES: Mutex<HashMap<ChannelId, Conversation>> = Mutex::new(HashMap::new());
+}
 
 struct Handler;
 #[async_trait]
@@ -26,6 +30,11 @@ impl EventHandler for Handler {
             if let Err(why) = msg.channel_id.say(&ctx.http, "Hello!").await {
                 println!("Error sending message: {why:?}");
             }
+        } else if {
+            let histories = SERVER_HISTORIES.lock().await;
+            histories.contains_key(&msg.channel_id)
+        } {
+            println!("a");    
         } else if msg.content.starts_with("$") {
             let key = env::var("GEMINI_API_KEY").unwrap();
             let http = &Arc::new(Http::new(&env::var("RUSTY_TOKEN").unwrap()));
