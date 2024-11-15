@@ -4,3 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+gemini-rs = "*"
+lazy_static = "1.5.0"
+serenity = "*"
+tokio = { version = "*", features = ["macros", "rt-multi-thread"] }
