@@ -1,29 +1,24 @@
+use std::collections::HashMap;
 use std::env;
+use std::sync::{Arc, OnceLock};
 
-use serenity::all::Ready;
+use serenity::all::{Http, Ready};
 use serenity::async_trait;
 use serenity::model::channel::Message;
 use serenity::prelude::*;
-use lazy_static::lazy_static;
 
-lazy_static! {
-    static ref BOT_ID: u64 = 0;
-}
+static BOT_ID: OnceLock<u64> = OnceLock::new();
+//static SERVER_HISTORIES: HashMap<ChannelFlags>
 
 struct Handler;
 #[async_trait]
 impl EventHandler for Handler {
     async fn ready(&self, _ctx: Context, ready: Ready) {
-        //*BOT_ID = ready.user.id.get()
-        #![warn(unused_assignments)]
-        let mut bot_id = *BOT_ID;
-
-        bot_id = ready.user.id.get();
+        let _ = BOT_ID.get_or_init(|| ready.user.id.get());
     }
     async fn message(&self, ctx: Context, msg: Message) {
-        let bot_id = &BOT_ID;
-
-        if **bot_id != 0 && msg.author.id.get() == **bot_id {
+        let bot_id = *BOT_ID.get().unwrap();
+        if bot_id != 0 && msg.author.id.get() == bot_id {
             return;
         }
 
@@ -33,12 +28,15 @@ impl EventHandler for Handler {
             }
         } else if msg.content.starts_with("$") {
             let key = env::var("GEMINI_API_KEY").unwrap();
+            let http = &Arc::new(Http::new(&env::var("RUSTY_TOKEN").unwrap()));
+            let typing = msg.channel_id.start_typing(http);
             let mut response = gemini_rs::Conversation::new(
                 key,
                 "gemini-1.5-flash".to_string()
             ).prompt(&msg.content[1..]).await;
             response.truncate(2000);
 
+            typing.stop();
             if let Err(why) = msg.channel_id.say(&ctx.http, response).await {
                 println!("Error sending message: {why:?}");
             }
