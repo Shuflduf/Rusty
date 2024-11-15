@@ -33,18 +33,14 @@ impl EventHandler for Handler {
                 if SERVER_HISTORIES.lock().await
                 .contains_key(&msg.channel_id)
             {
-                // If the channel is in convo mode
                 let mut histories = SERVER_HISTORIES.lock().await;
-                histories.remove(&msg.channel_id)
-                
-
+                histories.remove(&msg.channel_id);
             } else {
-                // Add the channel to the list 
                 let mut histories = SERVER_HISTORIES.lock().await;
                 histories.insert(msg.channel_id, Conversation::new(
                     env::var("GEMINI_API_KEY").unwrap(),
                     "gemini-1.5-flash".to_string()
-                ))
+                ));
             }
 
         } else if 
@@ -53,32 +49,25 @@ impl EventHandler for Handler {
         {
             let mut histories = SERVER_HISTORIES.lock().await;
             if let Some(convo) = histories.get_mut(&msg.channel_id) {
-                todo!()
+                send_ai_message(&ctx, &msg, &msg.content, Some(convo)).await
             }
-            //let mut convo: &mut Conversation = histories.get(&msg.channel_id).unwrap();
-            //println!("{0:?}", *convo.prompt("a").await);
         } else if msg.content.starts_with("$") {
-            send_message(&ctx, &msg, &msg.content[1..], None).await
-            //let key = env::var("GEMINI_API_KEY").unwrap();
-            //let http = &Arc::new(Http::new(&env::var("RUSTY_TOKEN").unwrap()));
-            //let typing = msg.channel_id.start_typing(http);
-            //let mut response = gemini_rs::Conversation::new(
-            //    key,
-            //    "gemini-1.5-flash".to_string()
-            //).prompt(&msg.content[1..]).await;
-            //response.truncate(2000);
-            //
-            //typing.stop();
-            //if let Err(why) = msg.channel_id.say(&ctx.http, response).await {
-            //    println!("Error sending message: {why:?}");
-            //}
+            send_ai_message(&ctx, &msg, &msg.content[1..], None).await
         } 
     }
 }
 
-async fn send_message(ctx: &Context, msg: &Message, text: &str, convo: Option<Conversation>) {
-    let mut conversation = match convo {
-        None => Conversation::new(
+async fn send_long_message(channel: ChannelId, text: &str, ctx: &Context) {
+    let mut index = 0;
+    while index < text.len() {
+        let _ = channel.say(ctx.http.clone(), &text[index..index+2000]).await;
+        index += 2000;
+    };
+}
+
+async fn send_ai_message(ctx: &Context, msg: &Message, text: &str, convo: Option<&mut Conversation>) {
+    let conversation = match convo {
+        None => &mut Conversation::new(
                 env::var("GEMINI_API_KEY").unwrap(),
                 "gemini-1.5-flash".to_string()
             ),
@@ -86,13 +75,10 @@ async fn send_message(ctx: &Context, msg: &Message, text: &str, convo: Option<Co
     };
     let http = &Arc::new(Http::new(&env::var("RUSTY_TOKEN").unwrap()));
     let typing = msg.channel_id.start_typing(http);
-    let mut response = conversation.prompt(text).await;
-    response.truncate(2000);
+    let response = conversation.prompt(text).await;
 
+    send_long_message(msg.channel_id, &response, ctx).await;
     typing.stop();
-    if let Err(why) = msg.channel_id.say(&ctx.http, response).await {
-        println!("Error sending message: {why:?}");
-    }
 }
 
 #[tokio::main]
