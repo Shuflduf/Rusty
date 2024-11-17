@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::env;
 use std::sync::{Arc, OnceLock};
 
+use gemini_rs::safety::safety_settings_from;
 use gemini_rs::Conversation;
 use serenity::all::{ChannelId, Http, Message, Ready};
 use serenity::async_trait;
@@ -60,17 +61,25 @@ impl EventHandler for Handler {
 async fn send_long_message(channel: ChannelId, text: &str, ctx: &Context) {
     let mut index = 0;
     while index < text.len() {
-        let _ = channel.say(ctx.http.clone(), &text[index..index+2000]).await;
+        let mut part = text[index..].to_string();
+        part.truncate(2000);
+        println!("{part}");
+        let _ = channel.say(ctx.http.clone(), part).await;
         index += 2000;
     };
 }
 
 async fn send_ai_message(ctx: &Context, msg: &Message, text: &str, convo: Option<&mut Conversation>) {
     let conversation = match convo {
-        None => &mut Conversation::new(
-                env::var("GEMINI_API_KEY").unwrap(),
+        None => { 
+            let api_key = env::var("GEMINI_API_KEY").unwrap();
+            let mut c = Conversation::new(
+                api_key,
                 "gemini-1.5-flash".to_string()
-            ),
+            );
+            c.update_safety_settings(safety_settings_from(gemini_rs::safety::HarmBlockThreshold::Off));
+            c
+        },
         Some(cool_its_done) => cool_its_done,
     };
     let http = &Arc::new(Http::new(&env::var("RUSTY_TOKEN").unwrap()));
